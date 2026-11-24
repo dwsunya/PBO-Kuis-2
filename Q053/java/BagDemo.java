@@ -18,37 +18,28 @@ public class BagDemo {
         void add(T item, int n) {
             // TODO(Q053): if (n <= 0) throw new IllegalArgumentException(...);
             //   counts.merge(item, n, Integer::sum); size += n;
-
-            if(n <= 0){
-                throw new IllegalArgumentException();
-            }else{
-                counts.merge(item, n, Integer::sum);
-                size += n;
-            }
+            if (n <= 0) throw new IllegalArgumentException("n must be positive: " + n); // If n is less than or equal to 0, then reject it and provide a message stating that the value of n must be positive.
+            counts.merge(item, n, Integer::sum); // Perform an item merge; if 'n' already exists, add the new 'n' to the existing 'n'.
+            size += n; // add n to size
         }
 
         /** Object, not T, like Collection.contains: asking about a stranger is not an error. */
         int count(Object item) {
             // TODO(Q053): return counts.getOrDefault(item, 0);
-            return counts.getOrDefault(item, 0);
+            return counts.getOrDefault(item, 0); // return the result from getOrDeault(item, 0)
         }
 
         boolean remove(T item) {
             // TODO(Q053): if absent return false; if count == 1 remove the key, else decrement; size--;
-            Integer count = counts.get(item);
-
-            if(count == null){
-                return false;
+            Integer count = counts.get(item); // Create a count variable of type Integer, as it can hold a null value.
+            if (count == null) return false; // If count is null, return false.
+            if (count == 1) { // if count is 1
+                counts.remove(item); // remove item
+            } else { // if count is a value other than 1
+                counts.put(item, count - 1); // decrement count by 1
             }
-                
-            if(count == 1){
-                counts.remove(item);
-            }else{
-                counts.put(item, count - 1);
-            }
-
-            size--;
-            return true;
+            size--; // decrement size
+            return true; // return true
         }
 
         int size() {
@@ -57,13 +48,21 @@ public class BagDemo {
 
         int distinct() {
             // TODO(Q053): return counts.size();
-            return counts.size();
+            return counts.size(); // return size
         }
 
         /** The element added most often; on a tie, the one added first. */
         Optional<T> mostCommon() {
             // TODO(Q053): walk entries in insertion order, keep the first strictly larger count.
-            return Optional.empty();
+            T best = null; // create new variable named best
+            int bestCount = 0; // create new variable named bestCount
+            for (Map.Entry<T, Integer> e : counts.entrySet()) { // loop trough entrySet
+                if (e.getValue() > bestCount) { // if the value of e is bigger than bestCount
+                    best = e.getKey(); // assign best with the key of e
+                    bestCount = e.getValue(); // assign bestCount with the value of e
+                }
+            }
+            return Optional.ofNullable(best); // return best
         }
 
         /** A read-only view: callers can look but cannot corrupt size. */
@@ -75,8 +74,8 @@ public class BagDemo {
         /** A generic method: the union of two bags of any subtype of T. */
         static <T> Bag<T> union(Bag<? extends T> a, Bag<? extends T> b) {
             // TODO(Q053): result = new Bag<>(); a.counts.forEach(result::add); b.counts.forEach(result::add);
-            Bag<T> result = new Bag<>();
-            a.counts.forEach(result::add);
+            Bag<T> result = new Bag<>(); // create result variable with Bag type
+            a.counts.forEach(result::add); 
             b.counts.forEach(result::add);
             return result;
         }

@@ -35,7 +35,23 @@ public class QuotePanel {
         // TODO(Q060): parse kg; if invalid return the error text; if kg<=0 or kg>50 return the
         //   range error; halfKg = ceil(2*max(kg, s.minKg)); price = s.rate*halfKg/2; hours = s.hours;
         //   if express: price = 3*price/2, hours = max(6, s.hours/4); return the formatted label.
-        return "";
+        double kg; // creating kg variable
+        try {
+            kg = Double.parseDouble(kgText); // try to assign kg with parsing
+        } catch (NumberFormatException e) {
+            return e.getMessage(); // if the try return an error, then return the error message 
+        }
+        if (kg <= 0 || kg > 50) {
+            return "Weight must be above 0 and at most 50 kg"; // if kg value is negative or greater than 50, then return error message
+        }
+        int halfKg = (int) Math.ceil(2 * Math.max(kg, s.minKg)); // creating halfKg variable
+        long price = s.rate * halfKg/2; // creating price variable
+        int hours = s.hours; // creating hours variable
+        if (express) { // if express value isnt false
+            price = 3 * price/2; // times price by 1.5
+            hours = Math.max(6, s.hours/4); // assign hours with max from either 6 or hours divided by 4
+        }
+        return String.format(Locale.US, "%s %.1f kg%s: Rp%,d, ready in %d h", s.name(), halfKg / 2.0, express ? " express" : "", price, hours); // return the message
     }
 
     /** The view: components plus listeners that only ask the model. */
@@ -74,6 +90,11 @@ public class QuotePanel {
         private void refresh(boolean explicit) {
             // TODO(Q060): handled++; if (explicit) quoted = true;
             //   if (quoted) result.setText(quote(kg.getText(), (Service) service.getSelectedItem(), express.isSelected()));
+            handled++; // increment handled
+            if (explicit) quoted = true; // if explicit is true then set quoted to true
+            if (quoted) { // if quoted true
+                result.setText(quote(kg.getText(), (Service) service.getSelectedItem(), express.isSelected())); // set result text
+            }
         }
     }
 

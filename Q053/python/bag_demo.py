@@ -15,7 +15,8 @@ class Bag(Generic[T]):
     def add(self, item: T, n: int = 1) -> None:
         # TODO(Q053): if n <= 0: raise ValueError(...);
         #   self._counts[item] = self._counts.get(item, 0) + n; self._size += n
-        if n <= 0: raise ValueError()
+        if n <= 0:
+            raise ValueError(f"n must be positive: {n}") # if n less than equal 0, then return error with the message
         self._counts[item] = self._counts.get(item, 0) + n
         self._size += n
 
@@ -25,27 +26,42 @@ class Bag(Generic[T]):
 
     def remove(self, item: T) -> bool:
         # TODO(Q053): if absent return False; if count == 1 delete the key, else decrement; self._size -= 1
-        return False
+        count = self._counts.get(item) # create count variable that store item counts
+        if count is None: 
+            return False # if count is null then return false
+        if count == 1:
+            del self._counts[item] # if count is equal 1 then delete key
+        else:
+            self._counts[item] = count - 1 # if count is not 1 then substract the item count
+        self._size -= 1 # decrement the size
+        return True # return true
 
     def __len__(self) -> int:
         return self._size
 
     def distinct(self) -> int:
         # TODO(Q053): return len(self._counts)
-        return len(self._counts)
+        return len(self._counts) # return len
 
     def most_common(self) -> Optional[T]:
         # TODO(Q053): if empty return None; return max(self._counts, key=lambda k: self._counts[k])
-        return None
+        if not self._counts:
+            return None # if not self._counts then return none
+        return max(self._counts, key=lambda k: self._counts[k]) # return max value from two variables
 
     def as_map(self) -> Mapping[T, int]:
         # TODO(Q053): return MappingProxyType(self._counts)
-        return self._counts
+        return MappingProxyType(self._counts) # return mapping proxy type from self counts
 
     @staticmethod
     def union(a: "Bag[T]", b: "Bag[T]") -> "Bag[T]":
         # TODO(Q053): result = Bag(); for each bag add every (k, n) into result; return result
-        return Bag()
+        result: Bag[T] = Bag() # creating result variable
+        for k, n in a._counts.items(): 
+            result.add(k, n)
+        for k, n in b._counts.items():
+                result.add(k, n)
+        return result
 
     def __repr__(self) -> str:
         return f"{self._counts} size={self._size}"
