@@ -39,6 +39,7 @@ class OrderBook:
 
 
 SORT_KEYS = {
+    # use id if the time or name is the same
     "ready": lambda o: (o.ready_hour, o.id),
     "customer": lambda o: (o.customer.casefold(), o.id),
 }
@@ -48,27 +49,36 @@ class OrderListViewModel:
     def __init__(self, book, view):
         self.book, self.view = book, view
         self.filter, self.only_status, self.sort = "", None, "ready"
-        self.shown, self.updates = None, 0
-        book.add_listener(self.recompute)
-        self.recompute()
+        self.shown, self.updates = None, 0  # None ensures the initial result counts as an update.
+        book.add_listener(self.recompute)  # Model changes rebuild the displayed rows.
+        self.recompute()  # Prepare the first display immediately.
 
     def set_filter(self, text):
-        self.filter = text.strip().casefold()
-        # TODO(Q075): self.recompute()
+        self.filter = text.strip().casefold() # remove spaces at the ends and ignore case  # Normalize spaces and case for matching.
+        self.recompute()
 
     def set_only_status(self, status):
         self.only_status = status
-        # TODO(Q075): self.recompute()
+        self.recompute()  # Keep the current name filter when applying the status filter.
 
     def set_sort(self, key):
         self.sort = key
-        # TODO(Q075): self.recompute()
+        self.recompute()  # Rebuild the rows using the selected sorting key.
 
     def recompute(self):
-        # TODO(Q075): rows = [ ... for o in sorted(book.orders(), key=SORT_KEYS[sort])
-        #   if filter in o.customer.casefold() and (only_status is None or status == only_status)]
-        #   if rows != shown: shown = rows; updates += 1; view(rows)
-        pass
+        # sort the orders and keep the ones matching both filters
+        rows = [
+            # include status so we notice status changes too
+            f"{o.id} {o.customer} {o.service} {o.status} {o.ready_hour}:00"
+            for o in sorted(self.book.orders(), key=SORT_KEYS[self.sort])
+            if self.filter in o.customer.casefold()
+            and (self.only_status is None or o.status == self.only_status)
+        ]
+
+        if rows != self.shown: # only update if the rows changed  # List comparison checks both contents and order.
+            self.shown = rows
+            self.updates += 1 # count this update
+            self.view(rows) # send rows to the view  # Send prepared rows to the display or recording callback.
 
 
 def main():

@@ -25,7 +25,7 @@ public class OrderListViewModel {
         }
     }
 
-    /** The model: orders, and a single "something changed" notification. */
+    // stores orders and tells listeners when something changes
     static final class OrderBook {
         private final List<Order> orders = new ArrayList<>();
         private final List<Runnable> listeners = new ArrayList<>();
@@ -53,47 +53,59 @@ public class OrderListViewModel {
         }
     }
 
-    // ---------------- the view-model: all the view's decisions, none of its widgets ----------------
+    // filter and sort the rows here
     static final Comparator<Order> BY_READY =
-            // TODO(Q075): Comparator.comparingInt((Order o) -> o.readyHour).thenComparing(o -> o.id);
-            Comparator.comparing(o -> o.id);
+            Comparator.comparingInt((Order o) -> o.readyHour)
+                    .thenComparing(o -> o.id); // same time, sort by id
     static final Comparator<Order> BY_CUSTOMER =
-            // TODO(Q075): Comparator.comparing((Order o) -> o.customer, String.CASE_INSENSITIVE_ORDER).thenComparing(o -> o.id);
-            Comparator.comparing(o -> o.id);
+            Comparator.comparing((Order o) -> o.customer, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(o -> o.id);
 
     private final OrderBook book;
     private final Consumer<List<String>> view;
     private String filter = "";
     private Status onlyStatus = null;               // null: every status
     private Comparator<Order> sort = BY_READY;
-    private List<String> shown = null;
+    private List<String> shown = null; // null so the first result gets sent too
     int updates = 0;
 
     OrderListViewModel(OrderBook book, Consumer<List<String>> view) {
         this.book = book;
         this.view = view;
-        book.addListener(this::recompute);
-        recompute();
+        book.addListener(this::recompute); // run recompute when the book changes
+        recompute(); // show the first result
     }
 
     void setFilter(String text) {
-        filter = text.strip().toLowerCase(Locale.ROOT);
-        // TODO(Q075): recompute();
+        filter = text.strip().toLowerCase(Locale.ROOT); // remove spaces at the ends and use lowercase
+        recompute();
     }
 
     void setOnlyStatus(Status s) {
         onlyStatus = s;
-        // TODO(Q075): recompute();
+        recompute(); // update rows with the new status filter
     }
 
     void setSortByCustomer(boolean byCustomer) {
         sort = byCustomer ? BY_CUSTOMER : BY_READY;
-        // TODO(Q075): recompute();
+        recompute(); // update the sorting
     }
 
     private void recompute() {
-        // TODO(Q075): book.orders().stream().filter(name contains filter).filter(status matches)
-        //   .sorted(sort).map(format).toList(); if (!rows.equals(shown)) { shown=rows; updates++; view.accept(rows); }
+        List<String> rows = book.orders().stream()
+                .filter(o -> o.customer.toLowerCase(Locale.ROOT).contains(filter)) // check the name
+                .filter(o -> onlyStatus == null || o.status == onlyStatus) // null means all statuses
+                .sorted(sort)
+                // put status in the text so status changes are noticed too
+                .map(o -> o.id + " " + o.customer + " " + o.service + " "
+                        + o.status + " " + o.readyHour + ":00")
+                .toList();
+
+        if (!rows.equals(shown)) { // only update if the rows are different
+            shown = rows;
+            updates++; // count this update
+            view.accept(rows); // send the new rows to the view
+        }
     }
 
     public static void main(String[] args) {

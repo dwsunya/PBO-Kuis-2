@@ -27,7 +27,7 @@ class BathTowel(Towel):
 
 
 T = TypeVar("T")
-T_contra = TypeVar("T_contra", contravariant=True)
+T_contra = TypeVar("T_contra", contravariant=True)  # A consumer of Garment can also consume Towel.
 
 
 class Sink(Protocol[T_contra]):
@@ -37,21 +37,29 @@ class Sink(Protocol[T_contra]):
 
 
 def total_kg(items: Sequence[Garment]) -> float:
-    # TODO(Q054): return sum(g.grams for g in items) / 1000
-    return 0.0
+    # Sequence also accepts shirts and towels because they are garments
+    return sum(g.grams for g in items) / 1000
 
 
 def add_spare_towels(dst: MutableSequence[Towel], n: int) -> None:
-    # TODO(Q054): for i in range(1, n + 1): dst.append(Towel(f"spare-{i}"))
+    # invariant, so a garment list does not match this type hint
+    for i in range(1, n + 1):
+        dst.append(Towel(f"spare-{i}"))
 
 
 def add_spare_towels_anywhere(dst: Sink[Towel], n: int) -> None:
-    # TODO(Q054): for i in range(1, n + 1): dst.append(Towel(f"spare-{i}"))
+    # only needs append, so a garment list works too
+    for i in range(1, n + 1):
+        dst.append(Towel(f"spare-{i}"))
 
 
 def transfer(src: Iterable[T], dst: List[T]) -> int:
-    # TODO(Q054): move every item from src to dst, counting them; return moved
-    return 0
+    # read from src, then add each item to dst
+    moved = 0 # count the added items
+    for item in src:
+        dst.append(item) # add item to the destination
+        moved += 1 # increase the count
+    return moved  # Clearing is left to the caller because Iterable has no clear method.
 
 
 def main() -> None:
@@ -68,7 +76,7 @@ def main() -> None:
     print(f"(5) transfer(bath -> towels)  = {moved} moved, towels = {towels}, bath_towels = {bath_towels}")
     moved = transfer(shirts, basket)
     print(f"    transfer(shirts -> basket) = {moved} moved, basket = {basket}")
-    # At run time nothing is checked: the wrong call below runs and corrupts the list.
+    # Python still runs this, so a towel gets into the shirt list
     only_shirts: List[Shirt] = [Shirt("kemeja")]
     transfer([Towel("rogue")], only_shirts)    # type: ignore[misc]
     print("    run time let a Towel into List[Shirt]:", only_shirts,

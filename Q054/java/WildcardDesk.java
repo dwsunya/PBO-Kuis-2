@@ -42,21 +42,31 @@ public class WildcardDesk {
         }
     }
 
-    /** src only PRODUCES garments for us to read: ? extends. */
+    // extends lets us read each item as Garment
     static double totalKg(List<? extends Garment> items) {
-        // TODO(Q054): sum the grams of every garment; return grams / 1000.0.
-        return 0.0;
+        int grams = 0; // total weight in grams
+        for (Garment item : items) {
+            grams += item.grams; // add the weight of this item
+        }
+        return grams / 1000.0; // convert grams to kg, keep the decimal
     }
 
-    /** dst only CONSUMES towels we put in: ? super. */
+    // super lets us add towels to this list
     static void addSpareTowels(List<? super Towel> dst, int n) {
-        // TODO(Q054): for (int i = 1; i <= n; i++) dst.add(new Towel("spare-" + i));
+        for (int i = 1; i <= n; i++) {
+            dst.add(new Towel("spare-" + i)); // add a spare towel
+        }
     }
 
-    /** Both at once: read from a producer of T, write into a consumer of T. */
+    // move items from src to dst
     static <T> int transfer(Collection<? extends T> src, Collection<? super T> dst) {
-        // TODO(Q054): move every item from src to dst, counting them; src.clear(); return moved;
-        return 0;
+        int moved = 0; // count the moved items
+        for (T item : src) {
+            dst.add(item); // add this item to the destination
+            moved++; // increase the count
+        }
+        src.clear(); // empty the source after moving everything
+        return moved;
     }
 
     public static void main(String[] args) {
@@ -66,7 +76,7 @@ public class WildcardDesk {
         List<BathTowel> bathTowels = new ArrayList<>(List.of(new BathTowel("bath-1"), new BathTowel("bath-2")));
         List<Object> anything = new ArrayList<>();
 
-        System.out.println("(1) totalKg(shirts)          = " + totalKg(shirts));
+        System.out.println("(1)` totalKg(shirts)          = " + totalKg(shirts));
         addSpareTowels(basket, 2);                                  // (3) List<Garment> accepts Towels
         addSpareTowels(anything, 1);                                // (3') so does List<Object>
         System.out.println("(3) basket after spares      = " + basket + ", anything = " + anything);
@@ -75,7 +85,7 @@ public class WildcardDesk {
                 + ", bathTowels = " + bathTowels);
         moved = WildcardDesk.<Garment>transfer(shirts, basket);    // explicit T = Garment
         System.out.println("    transfer(shirts -> basket) = " + moved + " moved, basket = " + basket);
-        List<? extends Garment> view = towels;                      // (8) a read-only window onto towels
+        List<? extends Garment> view = towels;                      // (8) read as Garment; adding a Shirt is unsafe
         Garment first = view.get(0);
         System.out.println("(8) view.get(0) = " + first + ", totalKg(view) = " + totalKg(view));
         view.clear();                                               // clear and remove are fine; add(x) is not
